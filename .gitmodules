@@ -1,0 +1,3 @@
+[submodule "external/CoreRobotics"]
+	path = external/CoreRobotics
+	url = https://gitlab.com/powan/CoreRobotics.git
