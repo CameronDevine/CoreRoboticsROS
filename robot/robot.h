@@ -1,4 +1,4 @@
-CREulerMode convention = CR_EULER_MODE_XYZ;
+//CREulerMode convention = CR_EULER_MODE_XYZ;
 
 std::vector<CRFrameEuler*> frames = {
 	new CRFrameEuler(0, 0, 0, 0, 0, 0, convention, CR_EULER_FREE_ANG_G),

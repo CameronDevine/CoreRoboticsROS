@@ -1,0 +1,50 @@
+import rospy
+from sensor_msgs.msg import Joy, JointState
+from geometry_msgs.msg import Twist
+import numpy as np
+
+class Teleop:
+	dt = 0.1
+
+	def __init__(self):
+		rospy.init_node('teleop')
+		self.pose_sub = rospy.Subscriber('pose', Twist, self.init_goal, queue_size = 10)
+		self.goal_pub = rospy.Publisher('/goal', Twist, queue_size = 10)
+		home = JointState()
+		home.position = [0, np.pi / 2, -np.pi / 2, 0, 0, 0]
+		rate = rospy.Rate(5)
+		self.goal = None
+		while self.goal is None:
+			rospy.Publisher('/config', JointState, queue_size = 5).publish(home)
+			rate.sleep()
+		rospy.Subscriber("joy", Joy, self.update, queue_size = 10)
+		rate = rospy.Rate(1. / self.dt)
+		while True:
+			self.move()
+			rate.sleep()
+
+	def init_goal(self, pose):
+		self.pose_sub.unregister()
+		self.goal = np.array([
+			pose.linear.x,
+			pose.linear.y,
+			pose.linear.z,
+			pose.angular.x,
+			pose.angular.y,
+			pose.angular.z])
+
+	def update(self, data):
+		self.goal[0] += self.dt * data.axes[0]
+
+	def move(self):
+		goal = Twist()
+		goal.linear.x = self.goal[0]
+		goal.linear.y = self.goal[1]
+		goal.linear.z = self.goal[2]
+		goal.angular.x = self.goal[3]
+		goal.angular.y = self.goal[4]
+		goal.angular.z = self.goal[5]
+		self.goal_pub.publish(goal)
+
+if __name__ == '__main__':
+	Teleop()

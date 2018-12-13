@@ -4,6 +4,8 @@
 #include "sensor_msgs/JointState.h"
 #include "geometry_msgs/Twist.h"
 
+#define convention CR_EULER_MODE_XYZ
+
 using namespace CoreRobotics;
 
 class Solver {
@@ -12,29 +14,34 @@ public:
 	void setPoseElements(const geometry_msgs::Twist::ConstPtr& msg) {
 		this->solver->setPoseElements((Eigen::Matrix<bool, 6, 1>() << (bool) msg->linear.x, (bool) msg->linear.y, (bool) msg->linear.z, (bool) msg->angular.x, (bool) msg->angular.y, (bool) msg->angular.z).finished());
 	};
-	//void setConfiguration(const sensor_msgs::JointState::ConstPtr& msg)
-	//	this->solver.setConfiguration(Eigen::VectorXd(req.positions));
-	//};
+	void setConfiguration(const sensor_msgs::JointState::ConstPtr& msg) {
+		this->solver->setQ0(Eigen::VectorXd::Map(msg->position.data(), msg->position.size()));
+		this->fk();
+	};
 	void solve(const geometry_msgs::Twist::ConstPtr& msg);
 private:
+	void fk(void);
 	int toolIndex;
 	CRHardLimits* solver;
-	ros::Publisher pub;
+	CRManipulator* MyRobot;
+	ros::Publisher joint_pub;
+	ros::Publisher pose_pub;
 };
 
 Solver::Solver(ros::NodeHandle node) {
-	this->pub = node.advertise<sensor_msgs::JointState>("q", 10);
+	this->joint_pub = node.advertise<sensor_msgs::JointState>("q", 10);
+	this->pose_pub = node.advertise<geometry_msgs::Twist>("pose", 10);
 	#include "robot.h"
-	CRManipulator* MyRobot = new CRManipulator();
+	this->MyRobot = new CRManipulator();
 	CRRigidBody* link;
 	int linkIndex;
 	for (std::vector<CRFrameEuler*>::iterator frame = frames.begin(); frame < frames.end(); frame++) {
 		link = new CRRigidBody(*frame);
-		linkIndex = MyRobot->addLink(link);
+		linkIndex = this->MyRobot->addLink(link);
 	}
 	CRFrameEuler* tool = new CRFrameEuler(0, 0, 0, 0, 0, 0, convention, CR_EULER_FREE_NONE);
-	this->toolIndex = MyRobot->addTool(linkIndex, tool);
-	this->solver = new CRHardLimits(*MyRobot, toolIndex, convention, true);
+	this->toolIndex = this->MyRobot->addTool(linkIndex, tool);
+	this->solver = new CRHardLimits(*this->MyRobot, toolIndex, convention, true);
 	this->solver->setQ0(Eigen::VectorXd::Zero(MyRobot->getDegreesOfFreedom()));
 	this->solver->setJointMotion(Eigen::VectorXd::Zero(MyRobot->getDegreesOfFreedom()));
 }
@@ -48,13 +55,28 @@ void Solver::solve(const geometry_msgs::Twist::ConstPtr& msg) {
 	std::vector<double> qv(&q[0], q.data() + q.size());
 	sensor_msgs::JointState soln;
 	soln.position = qv;
-	this->pub.publish(soln);
+	this->joint_pub.publish(soln);
+	this->fk();
+}
+
+void Solver::fk(void) {
+	this->MyRobot->setConfiguration(this->solver->getQ0());
+	Eigen::VectorXd pose = this->MyRobot->getToolPose(this->toolIndex, convention);
+	geometry_msgs::Twist msg;
+	msg.linear.x = pose[0];
+	msg.linear.y = pose[1];
+	msg.linear.z = pose[2];
+	msg.angular.x = pose[3];
+	msg.angular.y = pose[4];
+	msg.angular.z = pose[5];
+	this->pose_pub.publish(msg);
 }
 
 int main(int argc, char **argv) {
 	ros::init(argc, argv, "ik");
 	ros::NodeHandle node;
 	Solver solver = Solver(node);
-	ros::Subscriber solve_sub = node.subscribe("goal", 10, &Solver::solve, &solver);
+	ros::Subscriber goal_sub = node.subscribe("goal", 10, &Solver::solve, &solver);
+	ros::Subscriber config_sub = node.subscribe("config", 10, &Solver::setConfiguration, &solver);
 	ros::spin();
 }
