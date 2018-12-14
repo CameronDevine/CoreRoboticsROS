@@ -6,13 +6,17 @@ import numpy as np
 class Teleop:
 	dt = 0.1
 
-	def __init__(self):
+	def __init__(self, max_vel = 1000, angular_vel = 10):
+		self.max_vel = max_vel
+		self.angular_vel = angular_vel
 		rospy.init_node('teleop')
 		self.pose_sub = rospy.Subscriber('pose', Twist, self.init_goal, queue_size = 10)
 		self.goal_pub = rospy.Publisher('/goal', Twist, queue_size = 10)
 		home = JointState()
-		home.position = [0, np.pi / 2, -np.pi / 2, 0, 0, 0]
+		#home.position = [0, np.pi / 2, -np.pi / 2, 0, 0, 0]
+		home.position = [0, -1, 1.5, -0.5 - np.pi / 2, -np.pi / 2, 0]
 		rate = rospy.Rate(5)
+		self.velocity = np.zeros([6])
 		self.goal = None
 		while self.goal is None:
 			rospy.Publisher('/config', JointState, queue_size = 5).publish(home)
@@ -34,9 +38,13 @@ class Teleop:
 			pose.angular.z])
 
 	def update(self, data):
-		self.goal[0] += self.dt * data.axes[0]
+		self.velocity[0] = self.max_vel * -data.axes[0]
+		self.velocity[1] = self.max_vel * data.axes[1]
+		self.velocity[2] = self.max_vel * data.axes[4]
+		self.velocity[5] = self.angular_vel * data.axes[3]
 
 	def move(self):
+		self.goal += self.dt * self.velocity
 		goal = Twist()
 		goal.linear.x = self.goal[0]
 		goal.linear.y = self.goal[1]
