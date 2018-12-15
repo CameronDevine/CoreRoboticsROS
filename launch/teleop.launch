@@ -1,0 +1,6 @@
+<launch>
+	<node pkg="CoreRoboticsROS" type="node" name="CoreRoboticsROS" />
+	<node pkg="joy" type="joy_node" name="joy" />
+	<node pkg="CoreRoboticsROS" type="teleop" name="teleop" />
+	<node pkg="CoreRoboticsROS" type="profile" name="profile" />
+</launch>
