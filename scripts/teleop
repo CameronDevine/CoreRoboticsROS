@@ -1,4 +1,4 @@
-#!/usr/bin/env pythons
+#!/usr/bin/env python
 
 import rospy
 from sensor_msgs.msg import Joy, JointState
