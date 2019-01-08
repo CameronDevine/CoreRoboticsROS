@@ -47,6 +47,7 @@ Solver::Solver(ros::NodeHandle node) {
 }
 
 void Solver::solve(const geometry_msgs::Twist::ConstPtr& msg) {
+	std::cout << "start solve" << std::endl;
 	Eigen::VectorXd goal(6);
 	goal << msg->linear.x, msg->linear.y, msg->linear.z, msg->angular.x, msg->angular.y, msg->angular.z;
 	this->solver->setToolPose(goal);
@@ -55,6 +56,10 @@ void Solver::solve(const geometry_msgs::Twist::ConstPtr& msg) {
 	std::vector<double> qv(&q[0], q.data() + q.size());
 	sensor_msgs::JointState soln;
 	soln.position = qv;
+	this->solver->getIKSolver()->getRobot().setConfiguration(q);
+	std::cout << goal << std::endl;
+	std::cout << this->solver->getIKSolver()->getRobot().getForwardKinematics() << std::endl;
+	std::cout << q << std::endl << std::endl;
 	this->joint_pub.publish(soln);
 	this->fk();
 }
