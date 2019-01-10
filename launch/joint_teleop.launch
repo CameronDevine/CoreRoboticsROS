@@ -1,0 +1,6 @@
+<launch>
+	<node pkg="CoreRoboticsROS" type="fk" name="ForwardKinematics" output="screen" />
+	<node pkg="joy" type="joy_node" name="joy" />
+	<node pkg="CoreRoboticsROS" type="joint_teleop" name="joint_teleop" />
+	<node pkg="CoreRoboticsROS" type="profile" name="profile" />
+</launch>

@@ -150,20 +150,26 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/ik.cpp)
+add_executable(${PROJECT_NAME}_ik src/ik.cpp)
+add_executable(${PROJECT_NAME}_fk src/fk.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+set_target_properties(${PROJECT_NAME}_ik PROPERTIES OUTPUT_NAME ik PREFIX "")
+set_target_properties(${PROJECT_NAME}_fk PROPERTIES OUTPUT_NAME fk PREFIX "")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}_node
+target_link_libraries(${PROJECT_NAME}_ik
+	${CMAKE_CURRENT_SOURCE_DIR}/external/CoreRobotics/lib/libCoreRobotics.a
+	${catkin_LIBRARIES}
+)
+target_link_libraries(${PROJECT_NAME}_fk
 	${CMAKE_CURRENT_SOURCE_DIR}/external/CoreRobotics/lib/libCoreRobotics.a
 	${catkin_LIBRARIES}
 )
@@ -179,12 +185,13 @@ target_link_libraries(${PROJECT_NAME}_node
 ## in contrast to setup.py, you can choose the destination
 install(PROGRAMS
 	scripts/teleop
+	scripts/joint_teleop
 	scripts/profile
 	DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME}_node
+install(TARGETS ${PROJECT_NAME}_ik ${PROJECT_NAME}_fk
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -200,6 +207,7 @@ install(TARGETS ${PROJECT_NAME}_node
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 install(FILES
 	launch/teleop.launch
+	launch/joint_teleop.launch
 	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
