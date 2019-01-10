@@ -8,7 +8,7 @@ import numpy as np
 class Teleop:
 	dt = 0.1
 
-	def __init__(self, max_vel = 0.001, angular_vel = 10):
+	def __init__(self, max_vel = 0.1, angular_vel = 10):
 		self.max_vel = max_vel
 		self.angular_vel = angular_vel
 		rospy.init_node('teleop')
