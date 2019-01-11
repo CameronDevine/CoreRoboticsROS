@@ -11,7 +11,8 @@ class Teleop:
 		self.max_vel = max_vel
 		rospy.init_node('teleop')
 		self.q_pub = rospy.Publisher('/q', JointState, queue_size = 10)
-		self.q = np.array([0, -1, 1.5, -0.5 - np.pi / 2, -np.pi / 2, 0])
+		#self.q = np.array([0, -1, 1.5, -0.5 - np.pi / 2, -np.pi / 2, 0])
+		self.q = np.zeros([6])
 		rate = rospy.Rate(5)
 		self.velocity = np.zeros([6])
 		self.goal = None
