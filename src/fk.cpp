@@ -13,6 +13,7 @@ public:
 	void fk(const sensor_msgs::JointState::ConstPtr& msg);
 private:
 	CRManipulator* MyRobot;
+	int tool;
 };
 
 FK::FK(void) {
@@ -25,12 +26,13 @@ FK::FK(void) {
 		linkIndex = this->MyRobot->addLink(link);
 	}
 	CRFrameEuler* tool = new CRFrameEuler(0, 0, 0, 0, 0, 0, convention, CR_EULER_FREE_NONE);
-	this->MyRobot->addTool(linkIndex, tool);
+	this->tool = this->MyRobot->addTool(linkIndex, tool);
 }
 
 void FK::fk(const sensor_msgs::JointState::ConstPtr& msg) {
 	this->MyRobot->setConfiguration(Eigen::VectorXd::Map(msg->position.data(), msg->position.size()));
-	std::cout << this->MyRobot->getForwardKinematics() << std::endl << std::endl;
+	std::cout << this->MyRobot->getForwardKinematics() << std::endl;
+	std::cout << this->MyRobot->getToolPose(this->tool, convention) << std::endl << std::endl;
 }
 
 int main(int argc, char **argv) {
